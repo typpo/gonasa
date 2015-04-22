@@ -6,18 +6,16 @@ package apod
 import (
 	"encoding/json"
 	"fmt"
+	"image"
 	"net/http"
 	"time"
+
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 )
 
-const apiURL = "https://api.data.gov/nasa/planetary/apod"
-
-// Request defines a single APOD data request.
-type Request struct {
-	Date        time.Time // The date date of the APOD image to retrieve.
-	Key         string    // The api.data.gov key for expanded usage.
-	ConceptTags bool      // Return an ordered dictionary of concepts from the APOD explanation.
-}
+const apiURL = "https://api.data.gov/nasa/planetary/apod?api_key=%s&concept_tags=%v&date=%s"
 
 // Response defines a single APOD data response.
 type Response struct {
@@ -26,19 +24,37 @@ type Response struct {
 	Explanation string `json:"explanation"`
 }
 
-// Fetch fetches APOD data as per the given request.
-func Fetch(req *Request) (*Response, error) {
-	url := fmt.Sprintf("%s?api_key=%s&concept_tags=%v&date=%s",
-		apiURL, req.Key, req.ConceptTags, req.Date.Format("2006-01-02"))
+// Fetch fetches APOD data as per the given request properties.
+//
+//    @key:  The api.data.gov key for expanded usage.
+//    @date: The date of the APOD image to retrieve.
+//    @tags: Returns an ordered dictionary of concepts from the APOD explanation.
+//           This is currently unused.
+//
+func Fetch(key string, date time.Time, tags bool) (Response, error) {
+	url := fmt.Sprintf(apiURL, key, tags, date.Format("2006-01-02"))
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 
 	defer resp.Body.Close()
 
 	var data Response
 	dec := json.NewDecoder(resp.Body)
-	return &data, dec.Decode(&data)
+	return data, dec.Decode(&data)
+}
+
+// Image returns the APOD image as a decoded Go image, if possible.
+func (r *Response) Image() (image.Image, error) {
+	resp, err := http.Get(r.Url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	img, _, err := image.Decode(resp.Body)
+	return img, err
 }

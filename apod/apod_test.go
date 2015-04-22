@@ -14,17 +14,13 @@ func Test(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resp, err := Fetch(&Request{
-		Date:        date,
-		ConceptTags: true,
-		Key:         "DEMO_KEY",
-	})
-
+	resp, err := Fetch("DEMO_KEY", date, true)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(resp.Url) == 0 {
-		t.Fatal("Expected > 0 URL length")
+	_, err = resp.Image()
+	if err != nil {
+		t.Fatalf("expected valid image: %v", err)
 	}
 }

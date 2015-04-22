@@ -10,14 +10,10 @@ Usage
 	date, err := time.Parse("2006-01-02", "2015-04-20")
 	...
 
-	resp, err := Fetch(&Request{
-		Date:        date,
-		ConceptTags: true,
-		Key:         "DEMO_KEY",
-	})
-
+	resp, err := Fetch("DEMO_KEY", date, true)
 	...
 
-	fmt.Println(resp.Url)
+	img, err := resp.Image()
+	...
 */
 package apod
